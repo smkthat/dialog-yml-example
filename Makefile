@@ -237,7 +237,7 @@ test-image: ## 🔍 Check Docker image & project env in container
 		python -c \
 		"import sys; \
 		print(f'Python version: {sys.version}'); \
-		from src.bot import main; \
+		from src import main; \
 		print('✅ Main function imported successfully');"
 	@$(MAKE) dockle
 

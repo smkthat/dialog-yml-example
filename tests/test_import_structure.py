@@ -33,7 +33,7 @@ def test_entrypoint_imports():
     """Test that the entrypoint module can be imported without issues."""
     # Test that we can import the main entrypoint
     try:
-        from src.bot import main
+        from src.main import main
 
         assert callable(main)
     except ImportError as e:
