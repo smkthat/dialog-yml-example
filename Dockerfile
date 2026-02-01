@@ -38,6 +38,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Then, use a final image without uv
 FROM python:3.13-slim-bookworm AS production
 
+WORKDIR /app
+
 # Setup a non-root user
 RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home nonroot
@@ -49,26 +51,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the virtual environment
-COPY --from=builder --chown=nonroot:nonroot /app/.venv /app/.venv
+# Copy the virtual environment and application files
+COPY --from=builder /app/.venv ./.venv
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/pyproject.toml ./pyproject.toml
 
-# Copy the application from the builder
-COPY --from=builder --chown=nonroot:nonroot /app/src /app/src
-COPY --from=builder --chown=nonroot:nonroot /app/pyproject.toml /app/pyproject.toml
+# Set permissions for the entire app directory
+RUN chown -R nonroot:nonroot /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src"
 ENV PYTHONUNBUFFERED=1
 
-# Create and set permissions for the logs directory
-RUN mkdir -p /app/logs && chown -R nonroot:nonroot /app/logs
-
 # Use the non-root user to run our application
 USER nonroot
-
-# Use `/app` as the working directory
-WORKDIR /app
 
 # Run the application by default
 CMD ["python", "-m", "src.main"]
